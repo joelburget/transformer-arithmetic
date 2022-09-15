@@ -2,3 +2,4 @@ einops
 numpy
 torch
 pandas
+plotly
