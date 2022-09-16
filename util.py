@@ -3,8 +3,8 @@ import einops
 import torch
 import torch.nn.functional as F
 import pandas as pd
+import data
 from hyperparams import p
-from data import is_train, is_test
 
 
 # Helper functions
@@ -31,7 +31,14 @@ def full_loss(fn, model, data):
     return cross_entropy_high_precision(logits, labels)
 
 
-def test_logits(logits, bias_correction=False, original_logits=None, mode="all"):
+def test_logits(
+    logits,
+    bias_correction=False,
+    original_logits=None,
+    mode="all",
+    is_train=data.is_train,
+    is_test=data.is_test,
+):
     # Calculates cross entropy loss of logits representing a batch of all p^2
     # possible inputs
     # Batch dimension is assumed to be first

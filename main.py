@@ -3,4 +3,4 @@ import train
 from pathlib import Path
 
 if __name__ == "__main__":
-    train.run_training(Path("."), "add", data.train, data.test)
+    train.run_training(Path("."), "div", data.div_train, data.div_test)

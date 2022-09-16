@@ -12,21 +12,29 @@ def gen_train_test(frac_train, num, seed=0):
     return pairs[:div], pairs[div:]
 
 
-train, test = gen_train_test(frac_train, p, seed)
-# print(len(train), len(test))
-
 # Creates an array of Boolean indices according to whether each data point is in
 # train or test
 # Used to index into the big batch of all possible data
-is_train = []
-is_test = []
-for x in range(p):
-    for y in range(p):
-        if (x, y, 113) in train:
-            is_train.append(True)
-            is_test.append(False)
-        else:
-            is_train.append(False)
-            is_test.append(True)
-is_train = np.array(is_train)
-is_test = np.array(is_test)
+
+
+def make_predicate_arrays(train, test):
+    is_train = []
+    is_test = []
+    for x in range(p):
+        for y in range(p):
+            if (x, y, 113) in train:
+                is_train.append(True)
+                is_test.append(False)
+            else:
+                is_train.append(False)
+                is_test.append(True)
+    return np.array(is_train), np.array(is_test)
+
+
+train, test = gen_train_test(frac_train, p, seed)
+
+div_train = [(x, y, z) for x, y, z in train if y != 0]
+div_test = [(x, y, z) for x, y, z in test if y != 0]
+
+is_train, is_test = make_predicate_arrays(train, test)
+is_div_train, is_div_test = make_predicate_arrays(div_train, div_test)

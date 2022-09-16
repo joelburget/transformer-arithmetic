@@ -14,13 +14,13 @@ fns_dict = {
     "add": lambda x, y: (x + y) % p,
     "sub": lambda x, y: (x - y) % p,
     "mul": lambda x, y: (x * y) % p,
-    # 'div': lambda x,y:(x/y)%p,
+    "div": lambda x, y: x // y,
     "x2xyy2": lambda x, y: (x**2 + x * y + y**2) % p,
     "rand": lambda x, y: random_answers[x][y],
 }
 
 
-def run_training(root, fn_name, train, test):
+def run_training(root, fn_name, train_data, test_data):
     fn = fns_dict[fn_name]
     model = Transformer(
         num_layers=num_layers,
@@ -45,8 +45,8 @@ def run_training(root, fn_name, train, test):
         os.mkdir(root / run_name)
         save_dict = {
             "model": model.state_dict(),
-            "train_data": train,
-            "test_data": test,
+            "train_data": train_data,
+            "test_data": test_data,
         }
         torch.save(save_dict, root / run_name / f"{fn_name}-init.pth")
     train_losses = []
@@ -54,8 +54,8 @@ def run_training(root, fn_name, train, test):
     epochs = []
     state_dicts = []
     for epoch in range(num_epochs):
-        train_loss = util.full_loss(fn, model, train)
-        test_loss = util.full_loss(fn, model, test)
+        train_loss = util.full_loss(fn, model, train_data)
+        test_loss = util.full_loss(fn, model, test_data)
         train_losses.append(train_loss.item())
         test_losses.append(test_loss.item())
         if epoch % 100 == 0:
