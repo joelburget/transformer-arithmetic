@@ -7,6 +7,7 @@ import torch
 import torch.optim as optim
 
 from model import Transformer
+import plotting
 from hyperparams import *
 import util
 
@@ -110,4 +111,4 @@ def run_training(root, fn_name, train_data, test_data):
         },
         root / run_name / f"{fn_name}-full-run.pth",
     )
-    lines([train_losses, test_losses], labels=["train", "test"], log_y=True)
+    plotting.lines([train_losses, test_losses], labels=["train", "test"], log_y=True)
