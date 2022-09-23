@@ -38,8 +38,8 @@ div_test = [(x, y, z) for x, y, z in test if y != 0]
 
 non_modular_add_train = [(x, y, z) for x, y, z in train if x + y < z]
 non_modular_add_test = [(x, y, z) for x, y, z in test if x + y < z]
-non_modular_sub_train = [(x, y, z) for x, y, z in train if x - y < z]
-non_modular_sub_test = [(x, y, z) for x, y, z in test if x - y < z]
+non_modular_sub_train = [(x, y, z) for x, y, z in train if 0 <= x - y < z]
+non_modular_sub_test = [(x, y, z) for x, y, z in test if 0 <= x - y < z]
 
 is_train, is_test = make_predicate_arrays(train, test)
 is_div_train, is_div_test = make_predicate_arrays(div_train, div_test)
