@@ -223,3 +223,56 @@ class Transformer(nn.Module):
             hp.add_hook(save_hook, "fwd")
             if incl_bwd:
                 hp.add_hook(save_hook_back, "bwd")
+
+
+class Mlps(nn.Module):
+    def __init__(
+        self, num_layers, d_vocab, d_model, d_mlp, n_ctx, act_type, use_cache=False
+    ):
+        super().__init__()
+        self.cache = {}
+        self.use_cache = use_cache
+
+        self.embed = Embed(d_vocab, d_model)
+        self.pos_embed = PosEmbed(n_ctx, d_model)
+
+        self.blocks = nn.ModuleList(
+            [MLP(d_model, d_mlp, act_type, model=[self])] for i in range(num_layers)
+        )
+        self.unembed = Unembed(d_vocab, d_model)
+
+        for name, module in self.named_modules():
+            if type(module) == HookPoint:
+                module.give_name(name)
+
+    def forward(self, x):
+        x = self.embed(x)
+        x = self.pos_embed(x)
+        for block in self.blocks:
+            x = block(x)
+        x = self.unembed(x)
+        return x
+
+    def set_use_cache(self, use_cache):
+        self.use_cache = use_cache
+
+    def hook_points(self):
+        return [module for name, module in self.named_modules() if "hook" in name]
+
+    def remove_all_hooks(self):
+        for hp in self.hook_points():
+            hp.remove_hooks("fwd")
+            hp.remove_hooks("bwd")
+
+    def cache_all(self, cache, incl_bwd=False):
+        # Caches all activations wrapped in a HookPoint
+        def save_hook(tensor, name):
+            cache[name] = tensor.detach()
+
+        def save_hook_back(tensor, name):
+            cache[name + "_grad"] = tensor[0].detach()
+
+        for hp in self.hook_points():
+            hp.add_hook(save_hook, "fwd")
+            if incl_bwd:
+                hp.add_hook(save_hook_back, "bwd")

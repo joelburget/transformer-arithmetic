@@ -6,7 +6,7 @@ import einops
 import torch
 import torch.optim as optim
 
-from model import Transformer
+from model import Mlps, Transformer
 import plotting
 from hyperparams import *
 import util
@@ -23,20 +23,32 @@ fns_dict = {
 }
 
 
-def run_training(root, fn_name, train_data, test_data):
+def run_training(root, fn_name, train_data, test_data, model="Transformer"):
     fn = fns_dict[fn_name]
-    model = Transformer(
-        num_layers=num_layers,
-        d_vocab=d_vocab,
-        d_model=d_model,
-        d_mlp=d_mlp,
-        d_head=d_head,
-        num_heads=num_heads,
-        n_ctx=n_ctx,
-        act_type=act_type,
-        use_cache=False,
-        use_ln=use_ln,
-    )
+    if model is "Transformer":
+        model = Transformer(
+            num_layers=num_layers,
+            d_vocab=d_vocab,
+            d_model=d_model,
+            d_mlp=d_mlp,
+            d_head=d_head,
+            num_heads=num_heads,
+            n_ctx=n_ctx,
+            act_type=act_type,
+            use_cache=False,
+            use_ln=use_ln,
+        )
+    else:  # 'Mlps'
+        model = Mlps(
+            num_layers=num_layers,
+            d_vocab=d_vocab,
+            d_model=d_model,
+            d_mlp=d_mlp,
+            n_ctx=n_ctx,
+            act_type=act_type,
+            use_cache=False,
+        )
+
     model.to("cuda")
     optimizer = optim.AdamW(
         model.parameters(), lr=lr, weight_decay=weight_decay, betas=(0.9, 0.98)
