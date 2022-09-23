@@ -63,9 +63,8 @@ class LayerNorm(nn.Module):
 
 # Attention
 class Attention(nn.Module):
-    def __init__(self, d_model, num_heads, d_head, n_ctx, model):
+    def __init__(self, d_model, num_heads, d_head, n_ctx):
         super().__init__()
-        self.model = model
         self.W_K = nn.Parameter(
             torch.randn(num_heads, d_head, d_model) / np.sqrt(d_model)
         )
@@ -108,9 +107,8 @@ class Attention(nn.Module):
 
 # MLP Layers
 class MLP(nn.Module):
-    def __init__(self, d_model, d_mlp, act_type, model):
+    def __init__(self, d_model, d_mlp, act_type):
         super().__init__()
-        self.model = model
         self.W_in = nn.Parameter(torch.randn(d_mlp, d_model) / np.sqrt(d_model))
         self.b_in = nn.Parameter(torch.zeros(d_mlp))
         self.W_out = nn.Parameter(torch.randn(d_model, d_mlp) / np.sqrt(d_model))
@@ -134,13 +132,12 @@ class MLP(nn.Module):
 
 # Transformer Block
 class TransformerBlock(nn.Module):
-    def __init__(self, d_model, d_mlp, d_head, num_heads, n_ctx, act_type, model):
+    def __init__(self, d_model, d_mlp, d_head, num_heads, n_ctx, act_type):
         super().__init__()
-        self.model = model
         # self.ln1 = LayerNorm(d_model, model=self.model)
-        self.attn = Attention(d_model, num_heads, d_head, n_ctx, model=self.model)
+        self.attn = Attention(d_model, num_heads, d_head, n_ctx)
         # self.ln2 = LayerNorm(d_model, model=self.model)
-        self.mlp = MLP(d_model, d_mlp, act_type, model=self.model)
+        self.mlp = MLP(d_model, d_mlp, act_type)
         self.hook_attn_out = HookPoint()
         self.hook_mlp_out = HookPoint()
         self.hook_resid_pre = HookPoint()
@@ -177,9 +174,7 @@ class Transformer(nn.Module):
         self.pos_embed = PosEmbed(n_ctx, d_model)
         self.blocks = nn.ModuleList(
             [
-                TransformerBlock(
-                    d_model, d_mlp, d_head, num_heads, n_ctx, act_type, model=[self]
-                )
+                TransformerBlock(d_model, d_mlp, d_head, num_heads, n_ctx, act_type)
                 for i in range(num_layers)
             ]
         )
@@ -237,7 +232,7 @@ class Mlps(nn.Module):
         self.pos_embed = PosEmbed(n_ctx, d_model)
 
         self.blocks = nn.ModuleList(
-            [MLP(d_model, d_mlp, act_type, model=[self])] for i in range(num_layers)
+            [MLP(d_model, d_mlp, act_type)] for i in range(num_layers)
         )
         self.unembed = Unembed(d_vocab, d_model)
 
