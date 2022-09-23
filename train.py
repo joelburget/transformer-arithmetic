@@ -40,7 +40,7 @@ def run_training(root, fn_name, train_data, test_data, model="Transformer"):
         )
     else:  # 'Mlps'
         model = Mlps(
-            num_layers=num_layers,
+            num_layers=2,
             d_vocab=d_vocab,
             d_model=d_model,
             d_mlp=d_mlp,
