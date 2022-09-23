@@ -18,6 +18,8 @@ fns_dict = {
     "div": lambda x, y: x // y,
     "x2xyy2": lambda x, y: (x**2 + x * y + y**2) % p,
     "rand": lambda x, y: random_answers[x][y],
+    "non_modular_add": lambda x, y: x + y,
+    "non_modular_sub": lambda x, y: x - y,
 }
 
 
