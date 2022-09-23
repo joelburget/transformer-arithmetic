@@ -232,7 +232,7 @@ class Mlps(nn.Module):
         self.pos_embed = PosEmbed(n_ctx, d_model)
 
         self.blocks = nn.ModuleList(
-            [MLP(d_model, d_mlp, act_type)] for i in range(num_layers)
+            [MLP(d_model, d_mlp, act_type) for i in range(num_layers)]
         )
         self.unembed = Unembed(d_vocab, d_model)
 
