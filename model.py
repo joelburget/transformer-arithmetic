@@ -8,7 +8,7 @@ from hook_point import HookPoint
 
 # From Neel Nanda's A Mechanistic Interpretability Analysis of Grokking
 
-# Embed & Unembed
+
 class Embed(nn.Module):
     def __init__(self, d_vocab, d_model):
         super().__init__()
@@ -30,7 +30,6 @@ class Unembed(nn.Module):
         return result
 
 
-# Positional Embeddings
 class PosEmbed(nn.Module):
     def __init__(self, max_ctx, d_model):
         super().__init__()
@@ -41,7 +40,6 @@ class PosEmbed(nn.Module):
         return result
 
 
-# LayerNorm
 class LayerNorm(nn.Module):
     def __init__(self, d_model, epsilon=1e-4, model=[None]):
         super().__init__()
@@ -61,7 +59,6 @@ class LayerNorm(nn.Module):
             return x
 
 
-# Attention
 class Attention(nn.Module):
     def __init__(self, d_model, num_heads, d_head, n_ctx):
         super().__init__()
@@ -105,7 +102,6 @@ class Attention(nn.Module):
         return out
 
 
-# MLP Layers
 class MLP(nn.Module):
     def __init__(self, d_model, d_mlp, act_type):
         super().__init__()
@@ -130,7 +126,6 @@ class MLP(nn.Module):
         return x
 
 
-# Transformer Block
 class TransformerBlock(nn.Module):
     def __init__(self, d_model, d_mlp, d_head, num_heads, n_ctx, act_type):
         super().__init__()
@@ -151,7 +146,6 @@ class TransformerBlock(nn.Module):
         return x
 
 
-# Full transformer
 class Transformer(nn.Module):
     def __init__(
         self,
@@ -248,26 +242,19 @@ class Mlps(nn.Module):
         x = self.unembed(x)
         return x
 
-    def set_use_cache(self, use_cache):
-        self.use_cache = use_cache
 
-    def hook_points(self):
-        return [module for name, module in self.named_modules() if "hook" in name]
+class NoMlp(nn.Module):
+    def __init__(self, d_head, num_heads, d_vocab, d_model, n_ctx):
+        super().__init__()
+        self.embed = Embed(d_vocab, d_model)
+        self.pos_embed = PosEmbed(n_ctx, d_model)
 
-    def remove_all_hooks(self):
-        for hp in self.hook_points():
-            hp.remove_hooks("fwd")
-            hp.remove_hooks("bwd")
+        self.attn = Attention(d_model, num_heads, d_head, n_ctx)
+        self.unembed = Unembed(d_vocab, d_model)
 
-    def cache_all(self, cache, incl_bwd=False):
-        # Caches all activations wrapped in a HookPoint
-        def save_hook(tensor, name):
-            cache[name] = tensor.detach()
-
-        def save_hook_back(tensor, name):
-            cache[name + "_grad"] = tensor[0].detach()
-
-        for hp in self.hook_points():
-            hp.add_hook(save_hook, "fwd")
-            if incl_bwd:
-                hp.add_hook(save_hook_back, "bwd")
+    def forward(self, x):
+        x = self.embed(x)
+        x = self.pos_embed(x)
+        x = x + self.attn(x)
+        x = self.unembed(x)
+        return x

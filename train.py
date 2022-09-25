@@ -6,7 +6,7 @@ import einops
 import torch
 import torch.optim as optim
 
-from model import Mlps, Transformer
+from model import Mlps, NoMlp, Transformer
 import plotting
 from hyperparams import *
 import util
@@ -37,6 +37,14 @@ def run_training(root, fn_name, train_data, test_data, model="Transformer"):
             act_type=act_type,
             use_cache=False,
             use_ln=use_ln,
+        )
+    elif model == "NoMlp":
+        model = NoMlp(
+            d_head=d_head,
+            num_heads=num_heads,
+            d_vocab=d_vocab,
+            d_model=d_model,
+            n_ctx=n_ctx,
         )
     else:  # 'Mlps'
         model = Mlps(
