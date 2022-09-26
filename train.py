@@ -23,9 +23,9 @@ fns_dict = {
 }
 
 
-def run_training(root, fn_name, train_data, test_data, model="Transformer"):
+def run_training(root, fn_name, train_data, test_data, model):
     fn = fns_dict[fn_name]
-    if model is "Transformer":
+    if model is None:
         model = Transformer(
             num_layers=num_layers,
             d_vocab=d_vocab,
@@ -37,24 +37,6 @@ def run_training(root, fn_name, train_data, test_data, model="Transformer"):
             act_type=act_type,
             use_cache=False,
             use_ln=use_ln,
-        )
-    elif model == "NoMlp":
-        model = NoMlp(
-            d_head=d_head,
-            num_heads=num_heads,
-            d_vocab=d_vocab,
-            d_model=d_model,
-            n_ctx=n_ctx,
-        )
-    else:  # 'Mlps'
-        model = Mlps(
-            num_layers=2,
-            d_vocab=d_vocab,
-            d_model=d_model,
-            d_mlp=d_mlp,
-            n_ctx=n_ctx,
-            act_type=act_type,
-            use_cache=False,
         )
 
     model.to("cuda")
