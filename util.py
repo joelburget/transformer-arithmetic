@@ -120,9 +120,24 @@ for i in range(1, p // 2 + 1):
 fourier_basis = torch.stack(fourier_basis, dim=0).to("cuda")
 
 
+alt_fourier_basis = []
+alt_fourier_basis.append(torch.ones(p) / np.sqrt(p))
+alt_fourier_basis_names = ["Const"]
+for i in range(1, p):
+    x = torch.sin(2 * torch.pi * torch.arange(p) * i / p)
+    alt_fourier_basis.append(x / x.norm())
+    alt_fourier_basis_names.append(f"sin {i}")
+alt_fourier_basis = torch.stack(alt_fourier_basis, dim=0).to("cuda")
+
+
 def fft1d(tensor):
     # Converts a tensor with dimension p into the Fourier basis
     return tensor @ fourier_basis.T
+
+
+def alt_fft1d(tensor):
+    # Converts a tensor with dimension p into the Fourier basis
+    return tensor @ alt_fourier_basis.T
 
 
 def fourier_2d_basis_term(x_index, y_index):
@@ -133,12 +148,33 @@ def fourier_2d_basis_term(x_index, y_index):
     return (fourier_basis[x_index][:, None] * fourier_basis[y_index][None, :]).flatten()
 
 
+def alt_fourier_2d_basis_term(x_index, y_index):
+    # Returns the 2D Fourier basis term corresponding to the outer product of
+    # the x_index th component in the x direction and y_index th component in the
+    # y direction
+    # Returns a 1D vector of length p^2
+    return (
+        alt_fourier_basis[x_index][:, None] * alt_fourier_basis[y_index][None, :]
+    ).flatten()
+
+
 def fft2d(mat):
     # Converts a pxpx... or batch x ... tensor into the 2D Fourier basis.
     # Output has the same shape as the original
     shape = mat.shape
     mat = einops.rearrange(mat, "(x y) ... -> x y (...)", x=p, y=p)
     fourier_mat = torch.einsum("xyz,fx,Fy->fFz", mat, fourier_basis, fourier_basis)
+    return fourier_mat.reshape(shape)
+
+
+def alt_fft2d(mat):
+    # Converts a pxpx... or batch x ... tensor into the 2D Fourier basis.
+    # Output has the same shape as the original
+    shape = mat.shape
+    mat = einops.rearrange(mat, "(x y) ... -> x y (...)", x=p, y=p)
+    fourier_mat = torch.einsum(
+        "xyz,fx,Fy->fFz", mat, alt_fourier_basis, alt_fourier_basis
+    )
     return fourier_mat.reshape(shape)
 
 
