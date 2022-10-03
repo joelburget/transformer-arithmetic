@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import torch
 
-from util import fourier_basis_names, unflatten_first
+from util import alt_fourier_basis_names, fourier_basis_names, unflatten_first
 from hyperparams import p
 
 # Plotting functions
@@ -149,6 +149,35 @@ def imshow_fourier(
         to_numpy(tensor),
         x=fourier_basis_names,
         y=fourier_basis_names,
+        labels={
+            "x": "x Component",
+            "y": "y Component",
+            "animation_frame": animation_name,
+        },
+        title=title,
+        color_continuous_midpoint=0.0,
+        color_continuous_scale="RdBu",
+        **kwargs
+    )
+    fig.update(data=[{"hovertemplate": "%{x}x * %{y}y<br>Value:%{z:.4f}"}])
+    if facet_labels:
+        for i, label in enumerate(facet_labels):
+            fig.layout.annotations[i]["text"] = label
+    fig.show()
+
+
+def imshow_alt_fourier(
+    tensor, title="", animation_name="snapshot", facet_labels=[], **kwargs
+):
+    # Set nice defaults for plotting functions in the 2D fourier basis
+    # tensor is assumed to already be in the Fourier Basis
+    if tensor.shape[0] == p * p:
+        tensor = unflatten_first(tensor)
+    tensor = torch.squeeze(tensor)
+    fig = px.imshow(
+        to_numpy(tensor),
+        x=alt_fourier_basis_names,
+        y=alt_fourier_basis_names,
         labels={
             "x": "x Component",
             "y": "y Component",
