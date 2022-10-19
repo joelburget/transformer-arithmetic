@@ -105,42 +105,37 @@ def is_close(a, b):
     ).item()
 
 
-fourier_basis = []
-fourier_basis.append(torch.ones(p) / np.sqrt(p))
-fourier_basis_names = ["Const"]
+neel_fourier_basis = []
+neel_fourier_basis.append(torch.ones(p) / np.sqrt(p))
+neel_fourier_basis_names = ["Const"]
 # Note that if p is even, we need to explicitly add a term for cos(kpi), ie
 # alternating +1 and -1
 for i in range(1, p // 2 + 1):
-    fourier_basis.append(torch.cos(2 * torch.pi * torch.arange(p) * i / p))
-    fourier_basis.append(torch.sin(2 * torch.pi * torch.arange(p) * i / p))
-    fourier_basis[-2] /= fourier_basis[-2].norm()
-    fourier_basis[-1] /= fourier_basis[-1].norm()
-    fourier_basis_names.append(f"cos {i}")
-    fourier_basis_names.append(f"sin {i}")
-fourier_basis = torch.stack(fourier_basis, dim=0).to("cuda")
+    neel_fourier_basis.append(torch.cos(2 * torch.pi * torch.arange(p) * i / p))
+    neel_fourier_basis.append(torch.sin(2 * torch.pi * torch.arange(p) * i / p))
+    neel_fourier_basis[-2] /= neel_fourier_basis[-2].norm()
+    neel_fourier_basis[-1] /= neel_fourier_basis[-1].norm()
+    neel_fourier_basis_names.append(f"cos {i}")
+    neel_fourier_basis_names.append(f"sin {i}")
+neel_fourier_basis = torch.stack(neel_fourier_basis, dim=0).to("cuda")
 
 
-alt_fourier_basis = []
-alt_fourier_basis.append(torch.ones(p) / np.sqrt(p))
-alt_fourier_basis_names = ["Const"]
+sin_fourier_basis = []
+sin_fourier_basis.append(torch.ones(p) / np.sqrt(p))
+sin_fourier_basis_names = ["Const"]
 for i in range(1, p):
     x = torch.sin(2 * torch.pi * torch.arange(p) * i / p)
-    alt_fourier_basis.append(x / x.norm())
-    alt_fourier_basis_names.append(f"sin {i}")
-alt_fourier_basis = torch.stack(alt_fourier_basis, dim=0).to("cuda")
+    sin_fourier_basis.append(x / x.norm())
+    sin_fourier_basis_names.append(f"sin {i}")
+sin_fourier_basis = torch.stack(sin_fourier_basis, dim=0).to("cuda")
 
 
-def fft1d(tensor):
+def fft1d(fourier_basis, tensor):
     # Converts a tensor with dimension p into the Fourier basis
     return tensor @ fourier_basis.T
 
 
-def alt_fft1d(tensor):
-    # Converts a tensor with dimension p into the Fourier basis
-    return tensor @ alt_fourier_basis.T
-
-
-def fourier_2d_basis_term(x_index, y_index):
+def fourier_2d_basis_term(fourier_basis, x_index, y_index):
     # Returns the 2D Fourier basis term corresponding to the outer product of
     # the x_index th component in the x direction and y_index th component in the
     # y direction
@@ -148,33 +143,12 @@ def fourier_2d_basis_term(x_index, y_index):
     return (fourier_basis[x_index][:, None] * fourier_basis[y_index][None, :]).flatten()
 
 
-def alt_fourier_2d_basis_term(x_index, y_index):
-    # Returns the 2D Fourier basis term corresponding to the outer product of
-    # the x_index th component in the x direction and y_index th component in the
-    # y direction
-    # Returns a 1D vector of length p^2
-    return (
-        alt_fourier_basis[x_index][:, None] * alt_fourier_basis[y_index][None, :]
-    ).flatten()
-
-
-def fft2d(mat):
+def fft2d(fourier_basis, mat):
     # Converts a pxpx... or batch x ... tensor into the 2D Fourier basis.
     # Output has the same shape as the original
     shape = mat.shape
     mat = einops.rearrange(mat, "(x y) ... -> x y (...)", x=p, y=p)
     fourier_mat = torch.einsum("xyz,fx,Fy->fFz", mat, fourier_basis, fourier_basis)
-    return fourier_mat.reshape(shape)
-
-
-def alt_fft2d(mat):
-    # Converts a pxpx... or batch x ... tensor into the 2D Fourier basis.
-    # Output has the same shape as the original
-    shape = mat.shape
-    mat = einops.rearrange(mat, "(x y) ... -> x y (...)", x=p, y=p)
-    fourier_mat = torch.einsum(
-        "xyz,fx,Fy->fFz", mat, alt_fourier_basis, alt_fourier_basis
-    )
     return fourier_mat.reshape(shape)
 
 
@@ -190,8 +164,8 @@ def analyse_fourier_2d(tensor, top_k=10):
                 tensor.flatten()[indices[i]].item(),
                 values[i].item() / total,
                 values[: i + 1].sum().item() / total,
-                fourier_basis_names[indices[i].item() // p],
-                fourier_basis_names[indices[i] % p],
+                neel_fourier_basis_names[indices[i].item() // p],
+                neel_fourier_basis_names[indices[i] % p],
             ]
         )
     display(
