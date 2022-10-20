@@ -23,7 +23,7 @@ fns_dict = {
 }
 
 
-def run_training(root, fn_name, train_data, test_data, model):
+def run_training(root, fn_name, train_data, test_data, model, num_epochs=num_epochs):
     fn = fns_dict[fn_name]
     if model is None:
         model = Transformer(
