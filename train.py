@@ -11,20 +11,10 @@ import plotting
 from hyperparams import *
 import util
 
-fns_dict = {
-    "add": lambda x, y: (x + y) % p,
-    "sub": lambda x, y: (x - y) % p,
-    "mul": lambda x, y: (x * y) % p,
-    "div": lambda x, y: x // y,
-    "x2xyy2": lambda x, y: (x**2 + x * y + y**2) % p,
-    "rand": lambda x, y: random_answers[x][y],
-    "non_modular_add": lambda x, y: x + y,
-    "non_modular_sub": lambda x, y: x - y,
-}
 
-
-def run_training(root, fn_name, train_data, test_data, model, num_epochs=num_epochs):
-    fn = fns_dict[fn_name]
+def run_training(
+    root, fn_name, fn, train_data, test_data, model, num_epochs=num_epochs
+):
     if model is None:
         model = Transformer(
             num_layers=num_layers,
