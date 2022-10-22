@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import torch
 
-from util import sin_fourier_basis_names, neel_fourier_basis_names, unflatten_first
+from util import unflatten_first
 from hyperparams import p
 
 # Plotting functions
