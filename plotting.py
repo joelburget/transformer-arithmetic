@@ -6,7 +6,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import torch
 
-from util import unflatten_first
+from util import unflatten_first, neel_fourier_basis_names
 from hyperparams import p
 
 # Plotting functions
@@ -29,7 +29,7 @@ def imshow_(tensor, xaxis=None, yaxis=None, animation_name="Snapshot", **kwargs)
     px.imshow(
         to_numpy(tensor, flat=False),
         labels={"x": xaxis, "y": yaxis, "animation_name": animation_name},
-        **kwargs
+        **kwargs,
     ).show()
 
 
@@ -75,7 +75,7 @@ def lines(
     title="",
     log_y=False,
     hover=None,
-    **kwargs
+    **kwargs,
 ):
     # Helper function to plot multiple lines
     if type(lines_list) == torch.Tensor:
@@ -111,7 +111,7 @@ def animate_lines(
     hover=None,
     xaxis="x",
     yaxis="y",
-    **kwargs
+    **kwargs,
 ):
     if type(lines_list) == list:
         lines_list = torch.stack(lines_list, axis=0)
@@ -133,7 +133,7 @@ def animate_lines(
         animation_frame=snapshot,
         range_y=[lines_list.min(), lines_list.max()],
         hover_name=hover,
-        **kwargs
+        **kwargs,
     ).show()
 
 
@@ -143,7 +143,7 @@ def imshow_fourier(
     title="",
     animation_name="snapshot",
     facet_labels=[],
-    **kwargs
+    **kwargs,
 ):
     # Set nice defaults for plotting functions in the 2D fourier basis
     # tensor is assumed to already be in the Fourier Basis
@@ -162,13 +162,113 @@ def imshow_fourier(
         title=title,
         color_continuous_midpoint=0.0,
         color_continuous_scale="RdBu",
-        **kwargs
+        **kwargs,
     )
     fig.update(data=[{"hovertemplate": "%{x}x * %{y}y<br>Value:%{z:.4f}"}])
     if facet_labels:
         for i, label in enumerate(facet_labels):
             fig.layout.annotations[i]["text"] = label
     fig.show()
+
+
+def split_imshow_fourier(tensor, animation_frame, title="", animation_name="snapshot"):
+    """9 separate plots showing meaningful slices of the whole."""
+
+    # Set nice defaults for plotting functions in the 2D fourier basis
+    # tensor is assumed to already be in the Fourier Basis
+    if tensor.shape[0] == p * p:
+        tensor = unflatten_first(tensor)
+    tensor = torch.squeeze(tensor)
+
+    # whole graph
+    imshow_fourier(
+        neel_fourier_basis_names,
+        tensor,
+        title,
+        animation_name=animation_name,
+        animation_frame=animation_frame,
+        facet_labels=[],
+    )
+
+    np_tensor = to_numpy(tensor)
+    p_2 = p // 2
+    sin_slice = slice(2, None, 2)
+    cos_slice = slice(1, None, 2)
+    frames = tensor.shape[animation_frame]
+
+    # 4 linear term graphs (sin left col, sin top row, cos left col, cos top row)
+    graphs = [
+        ("sin top row", sin_slice),
+        ("cos top row", cos_slice),
+    ]
+
+    for title, s in graphs:
+        data = np_tensor[0, s]
+        fig = px.imshow(
+            data.reshape(1, p_2, frames),
+            x=neel_fourier_basis_names[s],
+            y=["Const"],
+            title=title,
+            color_continuous_midpoint=0.0,
+            color_continuous_scale="RdBu",
+            labels={
+                "x": "x Component",
+                "y": "y Component",
+                "animation_frame": animation_name,
+            },
+            animation_frame=animation_frame,
+        )
+        fig.show()
+
+    graphs = [
+        ("sin left col", sin_slice),
+        ("cos left col", cos_slice),
+    ]
+
+    for title, s in graphs:
+        data = np_tensor[s, 0]
+        fig = px.imshow(
+            data.reshape(p_2, 1, frames),
+            x=["Const"],
+            y=neel_fourier_basis_names[s],
+            title=title,
+            color_continuous_midpoint=0.0,
+            color_continuous_scale="RdBu",
+            labels={
+                "x": "x Component",
+                "y": "y Component",
+                "animation_frame": animation_name,
+            },
+            animation_frame=animation_frame,
+        )
+        fig.show()
+
+    # 4 quadratic term graphs (sin^2, sin*cos, cos*sin, cos^2)
+    graphs = [
+        ("sin * sin", sin_slice, sin_slice),
+        ("sin * cos", sin_slice, cos_slice),
+        ("cos * sin", cos_slice, sin_slice),
+        ("cos * cos", cos_slice, cos_slice),
+    ]
+
+    for title, row_slice, col_slice in graphs:
+        data = np_tensor[row_slice, col_slice]
+        fig = px.imshow(
+            data.reshape((p_2, p_2, frames)),
+            x=neel_fourier_basis_names[col_slice],
+            y=neel_fourier_basis_names[row_slice],
+            labels={
+                "x": "x Component",
+                "y": "y Component",
+                "animation_frame": animation_name,
+            },
+            title=title,
+            color_continuous_midpoint=0.0,
+            color_continuous_scale="RdBu",
+            animation_frame=animation_frame,
+        )
+        fig.update(data=[{"hovertemplate": "%{x}x * %{y}y<br>Value:%{z:.4f}"}])
+        fig.show()
 
 
 def animate_multi_lines(
@@ -178,7 +278,7 @@ def animate_multi_lines(
     snapshot="snapshot",
     hover=None,
     swap_y_animate=False,
-    **kwargs
+    **kwargs,
 ):
     # Can plot an animation of lines with multiple lines on the plot.
     if type(lines_list) == list:
@@ -205,7 +305,7 @@ def animate_multi_lines(
         animation_frame=snapshot,
         range_y=[lines_list.min(), lines_list.max()],
         hover_name=hover,
-        **kwargs
+        **kwargs,
     ).show()
 
 
@@ -218,7 +318,7 @@ def animate_scatter(
     xaxis="x",
     color=None,
     color_name="color",
-    **kwargs
+    **kwargs,
 ):
     # Can plot an animated scatter plot
     # lines_list has shape snapshot x 2 x line
@@ -259,5 +359,5 @@ def animate_scatter(
         range_y=[lines_list[:, 1].min(), lines_list[:, 1].max()],
         hover_name=hover,
         color=color_name,
-        **kwargs
+        **kwargs,
     ).show()
