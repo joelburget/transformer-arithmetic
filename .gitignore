@@ -1,2 +1,4 @@
 __pycache__
 grok_*
+env
+.ipynp_checkpoints
