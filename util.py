@@ -19,14 +19,15 @@ def cross_entropy_high_precision(logits, labels):
     # such that 1+x is different from 1 in float32). This leads to loss spikes
     # and dodgy gradients
     logprobs = F.log_softmax(logits.to(torch.float64), dim=-1)
-    prediction_logprobs = torch.gather(logprobs, index=labels[:, None], dim=-1)
+    expanded_labels = labels[:, None] if labels.dim == 1 else labels
+    prediction_logprobs = torch.gather(logprobs, index=expanded_labels, dim=-1)
     loss = -torch.mean(prediction_logprobs)
     return loss
 
 
-def full_loss(fn, model, data):
-    # Take the final position only
-    logits = model(data)[:, -1]
+def full_loss(fn, model, data, digits=1):
+    # Take the output logits only
+    logits = model(data)[:, -digits]
     labels = torch.tensor([fn(i, j) for i, j, _ in data]).to("cuda")
     return cross_entropy_high_precision(logits, labels)
 
