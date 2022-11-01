@@ -160,6 +160,7 @@ class Transformer(nn.Module):
         use_cache=False,
         use_ln=True,
     ):
+        print(f"n_ctx: {n_ctx}")
         super().__init__()
         self.cache = {}
         self.use_cache = use_cache
@@ -187,6 +188,7 @@ class Transformer(nn.Module):
             x = block(x)
         # x = self.ln(x)
         x = self.unembed(x)
+        print(f"x.shape: {x.shape}")
         return x
 
     def set_use_cache(self, use_cache):

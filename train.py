@@ -29,7 +29,7 @@ def run_training(
             use_ln=use_ln,
         )
 
-    model.to("cuda")
+    # model.to("cuda")
     optimizer = optim.AdamW(
         model.parameters(), lr=lr, weight_decay=weight_decay, betas=(0.9, 0.98)
     )

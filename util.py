@@ -27,8 +27,9 @@ def cross_entropy_high_precision(logits, labels):
 
 def full_loss(fn, model, data, digits=1):
     # Take the output logits only
+    print(f"data: {data[0:5]}...")
     logits = model(data)[:, -digits]
-    labels = torch.tensor([fn(i, j) for i, j, _ in data]).to("cuda")
+    labels = torch.tensor([fn(i, j) for i, j, _ in data])  # .to("cuda")
     return cross_entropy_high_precision(logits, labels)
 
 
@@ -118,7 +119,7 @@ for i in range(1, p // 2 + 1):
     neel_fourier_basis[-1] /= neel_fourier_basis[-1].norm()
     neel_fourier_basis_names.append(f"cos {i}")
     neel_fourier_basis_names.append(f"sin {i}")
-neel_fourier_basis = torch.stack(neel_fourier_basis, dim=0).to("cuda")
+neel_fourier_basis = torch.stack(neel_fourier_basis, dim=0)  # .to("cuda")
 
 
 sin_fourier_basis = []
@@ -128,7 +129,7 @@ for i in range(1, p):
     x = torch.sin(2 * torch.pi * torch.arange(p) * i / p)
     sin_fourier_basis.append(x / x.norm())
     sin_fourier_basis_names.append(f"sin {i}")
-sin_fourier_basis = torch.stack(sin_fourier_basis, dim=0).to("cuda")
+sin_fourier_basis = torch.stack(sin_fourier_basis, dim=0)  # .to("cuda")
 
 
 def fft1d(fourier_basis, tensor):
